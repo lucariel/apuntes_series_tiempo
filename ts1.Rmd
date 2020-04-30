@@ -1,0 +1,640 @@
+---
+title: "Series de Tiempo"
+output: html_notebook
+---
+# Series de Tiempo (Helmut Lütkepohl)
+
+(Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.)
+
+
+### 2.1 Caracteristicas de una Serie de Tiempo
+
+Las series de tiempo pueden girar regularmente alrededor de un valor, pueden tener un comportamiento estocastico o determinista con tendencia. Pueden tener cambios por temporadas, pueden tener cambios de niveles, o pueden tener outliers, o varias combinaciones.
+
+Cualquier sea la caracteristica que tenga, deben ser identificadas y tenidas en cuenta.
+
+En este volumen, se asume que la fuente generadora es estocastica. y será denotada con $y_1,..,y_T$ generado por 
+$[y_t]_{t\in T}$
+
+### 2.2 Procesos estocasticos estacionarios e integrados.
+
+Un proceso estocastico es estacionario si sus primeros dos momentos estadisticos son invariantes en el tiempo, esto es:
+
+  + $E(y_t)=\mu_t$ para todo $t \in T$
+  
+  + $E[(y_t-\mu_y)(y_{t-h}-\mu_y)]=\gamma_h$ para todo $t \in T$, tal que $t-h \in T$
+  
+El primero implica una media invariante. El segundo aplica a la varianza ya que si $h=0$,$E[(y_t-\mu_y)^2] = \sigma_y^2$, y las covarianzas no depende de $t$, sino de $h$, que, coloquialmente implica que la covarianza entre dos elementos de un proceso estacionario depende solo de la longitud del rezago.
+
+En los ejemplos mas comunes esta el nivel de PBI de un país, que con frecuencia tiene una media creciente
+
+
+
+#### 2.2.2 Sample Autocorrelations, Partial Autocorrelations,and Spectral Densities
+
+*Sample Autocorrelation*
+
+Lo primero que hay que tener en cuenta analizando las autocorrelaciones, es la "Sample Autocorrelation"
+
+$$
+\hat\rho_h= \frac{\hat\gamma_h}{\hat\gamma_0}
+$$
+
+Para ello, es necesario, contar con la media de la muestra, 
+
+$$
+\bar y = \frac{\sum_{t=1}^T y_t}{T}
+$$
+Las autocorrelaciones de la muestra están dadas por:
+
+$$
+\hat \gamma = \frac{1}{T}\sum^T_{t=h+1}(y_t-\bar y)(y_{t-h}-\bar y)
+$$
+En un proceso estacionario $\hat \gamma$ decrece con el tiempo hasta que se elimina.
+
+Se puede hacer un test de hipotesis para determinar:
+
+$$
+H_0 \to \gamma_h  = 0\\
+H_1 \to \gamma  \neq 0\\
+$$
+Si el proceso generador es realmente aleatorio, $y_t$ y $y_{t-h}$ son estocasticamente independeintes para cualquier $h \neq 0$.
+
+Los estimadores de autocorrelaciones, normalizados, son asintoticamente normales  $T^{1/2}\rho_h \to N(0,1)$, por lo que, aproximadamente $\rho \sim 0 $.
+
+Entonces, el intervalo de confianza al 95%, $[-2/T^{(1/2)},2/T^{(1/2)}]$
+
+
+*Partial Autocorrelation*
+
+La autocorrelacion parcial entre $y_{t-1},...y_{t-h+1}$ es la funcion de autocorrelacion , condicional a los valores intermedios de la serie de tiempo. Formalmente:
+
+$$
+y_t = v + \alpha_1 y_{t-1}+...+\alpha_h y_{t-h} + u_t \\
+= Corr(y_t|y_{t-1},...,y_{t-h+1})
+$$
+conde $\hat \alpha$, se obtiene del OLS.
+
+
+*Spectral Density Function*
+
+La funcion de densidad espectral sumariza las autocorrelaciones de un proceso estacionario estocastico y está dada por:
+
+$$
+f_y (\lambda) = (2\pi)^{-1} \sum_{j=-\infty}^{\infty} \gamma_je^{-i\lambda j}
+$$
+Lo cual, usando funciones trigonometricas, puede expresarse:
+
+$$
+f_y (\lambda) =  (2\pi)^{-1} \Big( \gamma_0+2\sum_{j=1}^{\infty}\gamma_jcos(\lambda j) \Big)
+$$
+Vayamos por partes:
+
+  + $(-i)^{1/2}$ Es la unidad de numeros complejos
+  
+  + $\lambda \in [-\pi,\pi]$ es la frecuencia (número de ciclos por unidad de tiempo, en radiantes)
+  
+La segunda expresión contiene tanto $\gamma_j$ como $\gamma_0$, por lo que las autocovarianzas pueden sacarse de la funcion de densidad espectral integrando, en un ciclo 
+
+$$
+\gamma_0 = \sigma_y^2 = \int_{-\pi}^{\pi} f_y(\lambda) d\lambda
+$$
+
+$$
+\gamma_j =  \int_{-\pi}^{\pi} e^{i\lambda j}f_y(\lambda) d\lambda
+$$
+¿Que nos esta querieno decir?
+
+Bueno, empecemos por e primero $\sigma_y^2$, es la integral del ciclo completo, mientras integre dentro del ciclo, la integral me va a dar cuanto incorpora a la varianza los limites dentro de los cuales estoy integrando.
+
+Si la distancia entre los dos puntos, digamos $\lambda_1$ y $\lambda_2$, es infinitesimalmente pequeña la integral desaparece, y nos queda el "punto" $f_y(\lambda)$, por lo que en la funcion de densidad espectral, definida como $f_y(\lambda)$, nos dice cuanto incorpora a la varianza cada valor para el cual exista $\lambda$
+
+
+El periodograma es, básicamente, la funcion de densidad espectral, pero con estimadores en lugar de los parametros. Y está dado por 
+
+$$
+I_y(\lambda)=(2\pi)^{-1}\Big (\hat\gamma_0+2\sum_{j=1}^{T-1}\hat\gamma_jcos(\lambda j) \Big)
+$$
+
+Pero esto presenta un problema, porque el periodograma no es un estimador eficiente. Esto es el resultado del tamaño de la muestra, menor al total. Es decir, cuanto mas grande sea la muestra, mas autocovarianzas van a estar a incluidas. 
+
+Es posible mejorar la estimación usando un ponderador $\omega(j=1,...M_T)$, el cual es denominado como "ventana espectral" y $M_T$ es el punto de truncamiento
+
+$$
+\hat f_y(\lambda)=(2\pi)^{-1}\Big (\omega_0\hat\gamma_0+2\sum_{j=1}^{M_T}\omega_j\hat\gamma_jcos(\lambda j) \Big)
+$$
+Ahora bien $\omega$ siempre es funcion de tamaño de la muestro, o del punto de truncamiento. Para que la ponderacion se haga relativa a tales cuestiones. Y que la ponderacion $\omega$ tienda a 1 cuando $M_T$ tienda a infitnito.
+
+Dos propuestas de estas funciones vienen de:
+
+   $\omega_j = 1 - \frac{j}{M_T}$, propuesta por Barlett(1950)
+  
+   $\omega_j = \begin{cases} 1-6 \Big(\frac{j}{M_T} \Big)^2+6 \Big(\frac{j}{M_T} \Big)^3 & for & 0\leq j \leq \frac{M_T}{2}   \\ 2 \Big(1-\frac{j}{M_T} \Big)^3 & for &  \frac{M_T}{2}\leq j \leq M_T\end{cases}$ Parzen, 1961
+   
+
+Estas configuraciones de ponderadores tienen en cuenta que los estimadores basados en menos observaciones, reciben menos peso, que los ponderadores basados en mas observaciones.
+
+
+*Data Transformations and Filters*
+
+Como es sabido, muchos procesos economicos presentan caracteristicas incompatibles con la estacionaridad. Sin embargo, en muchos casos algunas trasformaciones simples pueden traer la serie a una mayor estacionalidad.
+
+Por ejemplo, primero realizar la transformacion monotonica (estritamente ascendente) y luego sacar las primeras diferencias del ingreso disponible de Alemania del Oeste en 1991, obtenemos lo que basicamente es la diferencia de las tasas de cambio y lo que obttenemos es una serie nueva, la serie de variacion en la tasa de crecimiento del ingreso, y esta serie si es estacionaria.
+
+$\Delta log(y_t)$ = $\Delta log(y_t)-\Delta log(y_{t-1})$
+
+Como regla general, puede ser recomendable la transformación logaritmica si la varianza de la serie original es creciente.
+
+Por ejemplo, otra tecnica puede ser, sabiendo que hay estacionalidad de verano o invierno, y los promedios de verano e invierno son distintos, si se le resta a cada periodo su propia media, nos queda la serie completa transformada que tiene mas probabilidad de ser estacionaria.
+
+
+
+*Filtering*
+
+Básicamente extrae ciertas caracteristicas de la serie de tiempo que no nos interesa. En la práctica, suele ser una funcion lineal.
+
+$$
+x_t = \sum_{j=-k}^l \omega_jy_{t-1} \\ t = k+1,..,T-l
+$$
+Donde $k$ y $l$ son numeros enteros positivos y $(\omega_{-k},...\omega_0,...\omega_l)$ define los poderadores con peso $\omega_j$.
+
+Se suele elegir los ponderadores tal que los niveles de la serie se mantengan, es decir: $\sum_{j=-k}^l \omega_j = 1$
+
+Un ejemplo muy comun son aquellas series de tiempo trimestrales a las cuales se le filtra el componente que genera que las medias entre los trimestres sean distintas.
+
+por ejemplo: $y_t = \mu_j+z_t$, para el trimestre $j$
+
+En ese caso tendriamos una serie que tiene esta pinta, donde $t=1$:
+
+$$
+x_t = \frac{1}{4}(\mu_1+\mu_2+\mu_3+\mu_4)+\frac{1}{8}z_{t-2}+\frac{1}{4}z_{t-1}+\frac{1}{4}z_{t}+\frac{1}{4}z_{t+1}+\frac{1}{8}z_{t+2}
+$$
+
+Y por lo tanto la media e $x_t= \frac{1}{4}(\mu_1+\mu_2+\mu_3+\mu_4)$, por la media  de los demás terminos es 0.
+
+A menudo, se utiliza una notacion especial para denostar el filtro, "lag operator"$L$, y en el filtro anterior se vería asi:
+
+$$
+x_t = \Big(\frac{1}{8}L^{-2}+\frac{1}{4}L^{-1}+\frac{1}{4}L^{0}+\frac{1}{4}L^{1}+\frac{1}{8}L^{2}\Big)
+$$
+
+Pero este es un filtro lineal especfico, la forma general de presetar estos filtros es:
+
+$$
+\omega(L) = \sum_{j=-k}^l\omega_jL^j
+$$
+Este tipo de filtro en particular, que va tomando distintas medias respecto de t anteriores tiene el problema que no permite obtener una transformada para t = 1, por lo que la la longitud de $x_t$ es $t = k+1,...,T-l$
+
+Para solucionar este tipo de problemas es que filtros no lineales se han generado tal como Hodrick-Prescott. El cual puede ser definido indirectamente especificando la tendencia de $y_t$, tal que se minimice la siguiente funcion, es decir, el parametro que miniza la funcion es la tendencia:
+
+$$
+min_{ut}\sum_{t=1}^T[(y_t-\mu_t)^2+\lambda[(\mu_{t+1}-\mu_t)-(\mu_{t}-\mu_{t-1  })]^2]
+$$
+Donde $\lambda$ es una numero positivo constante elegido por el usuario, es decir, es un hiperparametro que no afecta la estimacion de la media constante. Lo "smooth" del resultado va a estar dado por la magnitud de $\lambda$, un valor grande de $\lambda$ genera mayor "smothness"
+
+Este filtro tambien puede ser escrito en los terminos del operador de Lag:
+
+$$
+\omega(L) = \frac{1}{1+\lambda(1-L)^2(1-L^{-1})^2}
+$$
+
+*Procesos integrados*
+
+Hay un tipo de transformación que es tan usada que tiene un nombre propio, si las $d$ diferencias son estacionarias se dice que el proceso es integrado de orden $d$ ($I(d)$)
+
+### 2.3 Algunos modelos populares de series de tiempo:
+
+#### 2.3.1 Proceso Autorregresivo
+
+*AR*
+
+Un proceso autorregresivo de orden $p$ ~ AR(p):
+
+$$
+y_t = \alpha_1 y_{t-1}+...+\alpha_p y_{t-p}+u_t
+$$
+Donde $u_t=0$ con varianza invariante en el tiempo ($E(u^2_t)=\sigma_u^2$) y los $\alpha_i$ son coeficientes fijos.
+
+Usando el lag-operator:
+
+$$
+(1-\alpha_1L-...-\alpha_pL^p)y_t = u_t \\
+\alpha(L)y_t=u_t
+$$
+El proceso autorregresivo de este tipo se dice que es estble si $\alpha(z)$ para todo $|z|\leq 1$
+Esto implica, coloquialmente, que independiente del numero de rezagos, $\alpha$ permanece dentro del circulo unitario.
+
+
+Los procesos autorregresivos estables pueden ser representados como la suma ponderada de errores del pasado:
+
+$$
+y_t = \alpha(L)^{-1}u_t = \phi(L)u_t = u_t + \sum_{j=1}^{\infty}\phi_ju_{t-j}
+$$
+
+Los procesos autorregresivos estables pueden ser calculados recursivamente por ejemplo un AR(1):
+
+$y_t = \alpha_1y_{t-1}+u_t$ el operador AR es $1- \alpha_1L$, por lo que $\alpha^j_1=\phi_j$
+
+
+$$
+y_t = \alpha(L)^{-1}u_t = \phi(L)u_t = u_t + \sum_{j=1}^{\infty}\phi_ju_{t-j} = u_t+\sum_{j=1}^{\infty}\alpha^j_1 u_{t-j}
+$$
+
+Un proceso estocastico autorregresivo que consiste en la suma ponderada de los elementos del sonido blanco, es MA, el cual será considerado luego.
+
+
+
+Asumiendo:
+
+  + T es el set de todos los naturales, por lo que el proceso $y_t$ fue iniciado en el infinito pasado.
+  
+  + Es estacionarion I(0), con media $0$
+  
+  + Varianza: $\sigma_y^2 = \gamma_0 = \sigma_u^2\sum_{j=0}^\infty \phi^2_j$
+  
+  + Covarianzas: $\gamma_h = \sigma_u^2\sum_{j=0}^{\infty}\phi_{j+h}\phi_j$ donde $h= \pm 1,\pm 2,...$
+  
+
+A ver, si el proceso es estacionario $\gamma_0 = \sigma_y$ lo cual:
+
+$$
+\sigma_y^2 = \frac{\sigma_u^2}{(1-\alpha^2_1)}
+$$
+y:
+
+$$
+\gamma_h=\sigma_u^2\sum_{j=0}^{\infty}\alpha_1^{j+h}\alpha_1^{j} = \frac{\sigma_u^2 \alpha_1^h}{(1-\alpha_1^2)} 
+$$
+para $h=\pm1, \pm2$
+
+El caso de la raiz unitaria es cuando $\alpha(1)=0$ para $z=1$. En este caso, el operador de lag $L$ puede ser factoreado y queda:
+
+$$
+\Delta y_t=u_t
+$$
+El cual es $I(1)$, ya que las primeras diferencias generan que el proceso sea estacionario. Esto implica que $u_t$ es un ruido blanco con varianza y medias constantes.
+
+*2.3.2 Finite-Order Moving Average Processes*
+
+Si el proceso puede ser representado como:
+
+$$
+y_t = u_t+m_1u_{t-1}+...+m_q u_{t-1}
+$$
+Donde $u_t$, de nuevo tiene media 0. El proceso es estacionario si, con la ayuda del operador de rezagos se verifica que:
+
+$$
+y_t = (1+m_1L+...+m_qL^q)u_t \\
+y_t = m(L)u_y
+$$
+
+En estos casos, el proceso tiene: 
+
+  + media 0 $E(y_t)=0$
+  
+  + $\sigma_y^2 = \gamma_0 = \sigma_u^2\sum_{j=0}^q m^2_j$, con $m_0 = 1$ 
+  
+  + $\gamma_h = \sigma_u^2\sum_{j=0}^{q-h}m_{j+h}m_j$ con $h=\pm1,...,\pm q$
+  
+  + $\gamma_h=0$ si $h=\pm(q+1)$
+
+
+
+
+*2.3.4 Autoregressive Conditional Heteroskedasticity*
+
+Los modelos vistos hasta ahora tenian la caracteristica de que el primer momento estadistico constante, es decir la media del proceso, dado los $p$ momentos anteriores.
+
+$E(y_t|y_{t-1},y_{t-2},...y_{t-p})$. 
+
+Por lo que la parte AR(p) se encarga de determinar la media condiciona. 
+Pero lo que ocurre con series outliers y clusters de volatilidad, los segundos momentos estadisticos tienen una estructura determinada. Por lo que surgieron, de este tipo de cuestiones, los modelos ARCH  (autorregresivos con heteroscedasticidad condicional). Solo el acronimo determina un amplio margen de modelos con una volatilidad condicional cambiante.
+
+Un modelo AR(p), puede tener heteroscedasticidad condicional de orden $q$ y ser ARCH(q) si la distribución condicional de $u_t$, dado su pasado $\Omega_{t-1} = (u_{t-1},u_{t-2},...,u_{t-q})$
+
+Tal como implica el modelo AR(p), la media de $u_t$ es efectivamente 0, pero la varianza:
+
+$$
+\sigma_t^2 = Var(u_t|\Omega_{t-1}) = E(u^2_t|\Omega_{t-1}) = \gamma_0+\gamma_1u^2_{t-1}+...+\gamma_qu^2_{t-q}
+$$
+
+Estos dos elementos, indican que $u_t|\Omega_{t-1}$~$(0,\sigma^2_t)$, la cual puede considerarse normal.
+
+
+Hay una version generalizada del modelo ARCH(q)...GARCH(q,n):
+$$
+\sigma_t^2 =\gamma_0+\gamma_1u^2_{t-1}+...+\gamma_qu^2_{t-q}+\beta_1 \sigma_{t-1}^2+....+\beta_n \sigma_{t-n}^2
+$$
+Que permite especificacion mas parsimoniosa cuando $q$ es grande. y este proceso con varianza incondicional si y solo si:
+
+$$
+\gamma_1+...+\gamma_q+\beta_1+...+\beta_n<1
+$$
+Si esta condicion se cumple,  $u_t$ tiene una varianza constante incondicional dada por:
+
+$$
+\sigma_u^2 = \frac{\gamma_0}{1-\gamma_1-...-\gamma_q-\beta_1-...-\beta_n}
+$$
+
+
+El modelo GARCH más simple se expresa:
+
+$$
+\sigma_t^2=\alpha_0+\alpha_1u_{t-1}^2+\alpha_2\sigma_{t-1}^2
+$$
+
+### 2.5 Model Specification (resumen gujarati)
+
+
+Es, para esto, necesario ver las funciones  de autocorrelacion y autocorrelacion parcial.
+
+Los procesos AR(p), tienen una funcion de autocorrelacion decreciente y un pico en la funcion de autocorrelacion parcial. Los modelos MA(q), alreves. Y los modelos AR(I)MA tienen funcion de autocorrelacion y autocorrelacion parcial decrecientes.
+
+
+### 2.6 Model Checking
+
+Mucho de los metodos de evaluación y diagnostico de un modelo tienen que ver con el analisis de los residuos, para lo cual se incluyen metodos graficos y estadisticos de prueba.
+
+Por otro lado, para ver cuan robusto y estable hay metodos recursivos que permiten la estimación para distintas submuestras.
+
+*2.6.1 Descriptive Analysis of the Residuals*
+
+Para realizar un analisis posible de los residuos $\hat u_t(t=1,...,T)$ se puede estandarizar la serie restandole la media y dividiendo por la varianza
+$$
+\hat u_t^s=\frac{\hat u -\bar u}{\sigma_u}
+$$
+Donde $\sigma_u^2 = T^{-1}\sum_{t=1}^T(u-\bar u)^2$
+
+Si los residuos estar normalmente distribuidos con media 0, aproximadamente el 95% de los residuos estandarizados deberian estar $\pm2$ alrededor de la banda de zero.
+
+
+Otra opción visual que permite encontrar distintas volatilidades en el modelo es la plot de los residuos al cuadrado o de los residuos estandarizados al cuadrado, para verificar heterscedasticidad condicional, lo mismo al respecto de lasfunciones de autocorrelacion y autocorrelacion parcial.
+
+Los errores estandar asintoticos de las autocorrelaciones tienden a ser menores a $\frac{1}{(T^{1/2})}$ particularmente cuando los lags son chicos.
+
+
+Tambien se pueden comparar los errores respecto a la funcion de densidad de probabilidad estimada. El kernel puede ser gausiano para la funcion de probabilidad de densidad normal, pero tambien existen otros. 
+
+$$
+f_h(u)=(Th)^{-1}\sum^T_{t=1}K \Big (\frac{u-\hat u^s_t}{h} \Big)
+$$
+Donde:
+
+  + h es el tamaño de la ventana. El tamaño de la ventana es algo arbitrario, pero siempre es buena idea $0.9T^{-1/5}min(\hat \sigma_u, rango.intercuartil/1.34)$, donde el rango intercuartil depende del Kernel gausiano usado.
+  + K(.) es la funcion de kernel 
+  
+
+*2.6.2 Diagnostic Tests of the Residuals*
+
+Más allá de las visualizacion de los residuos (estandarizados o no), hay varios test estadisticos que permiten el testeo de:
+  
+  + autocorrelacion
+  
+  + no-normalidad
+  
+  + ARCH
+  
+  + misespecificacion en general
+  
+**Portmanteau test for residual autocorrelation**.
+
+Este test lo que hace es una prueba de hipotesis donde:
+
+$$
+H_0: \rho_{u,1} = ... = \rho_{u,h} = 0
+$$
+vs 
+$$
+H_1: \rho_{u,i} \neq 0, i=1,...,h
+$$
+
+Aquí $\rho_{u,1}= Corr(u_t, u_{t-i})$. El estadistico de prueba $Q_h$, con distribución Chi Cuadrado  $\chi^2(h-p-q)$ está dado por:
+
+$$
+Q_h = T \sum_{j=1}^{h} \hat \rho_{u.j}^2
+$$
+donde 
+$$
+\hat \rho_{i,j} = T^{-1}\sum_{t = j+1}^{T} \hat u^s_t \hat u^s_{t-j}
+$$ 
+
+
+Se rechaza la hipotesis nula,la cual establece que los coeficientes de autocorrelacion de los residuos, para $Q_h$ suficientemente grandes
+
+Este test depende fuertemente del caracter asintotico de la prueba por lo cual no es adecuado para muestras chicas.
+
+
+Otros testeos incluyen:
+
+*LM test for residual autocorrelation in AR models.* el cual busca la significatividad de:
+
+$$
+u_t = \beta_1 u_{t-1} +...+\beta_hu_{t-h}+v_t
+$$
+*Lomnicki–Jarque-Bera test for nonnormality.*
+
+Este test tiene en cuenta dos cuestiones:
+
+  + Uso estandarizado de los residuos: $u_t^s = \frac{u_t}{\sigma_u}$
+  
+  + Chequea si los terceros y cuartos momentos de a serie de errores estandarizados con consistentes con la distribución normal
+  
+¿Cuales son las consecuencias de la no-normalidad? Mucha de la teoria depende de las caracteristicas asintoticas de los estadisticos de prueba. Tambien puede ocurrir que la no-normaliad en la distribución de los residuos sea consecuencia de no-linealidades qu no fueron incorporadas al modelo asi como tambien de heteroscedasticidad en el termino de error.
+
+*ARCH–LM test* Es una forma de identificar posibles heteroscedasticidad condicional:
+
+$$
+\hat u^2_t = \beta_0+\beta_1\hat u_{t-1}^2+...+\beta_q \hat u_{t-q}+v_t
+$$
+
+Si $\beta_{1..q} = 0$, indica homoscedasticidad y el estadistico de prueba esta dado por el coeficiente de determinación $R^2$ de la regresion antesmencionada
+
+
+####2.6.3 Stability Analysis
+
+Para analizar la estabilidad de la serie de tiempo por lo general se hace uso de estimativos para diferentes subperiodos. 
+
+**Test de Chow**
+
+Hay diferentes variantes de este test:
+
+  + Sample-split
+  
+  + break-point
+  
+  + forecast-test
+
+Por cambio estructural nos referimos a que los valores de los parámetros del modelo no permanecen constantes a lo largo de todo el periodo
+
+Supongamos que pensamos que podría haber un cambio estructural en $T_B$
+
+Primero:
+ + Se obtiene el modelo OSL para todo $T_N$, se obtiene:
+    
+    + $\hat u_t$ 
+    
+    + $\hat \sigma_u^2 = T^{-1}\sum_{t=1}^T \hat u^2_t$
+    
+$$
+\hat \sigma_{(1,2)}^2 = T_{1}^{-1}\sum_{t=1}^{T_1} \hat u_t^2 + T_{2}^{-1}\sum_{t=T-T_2+1}^{T} \hat u_t^2
+$$
+ 
+ 
+ + Se obtiene el moelo OSD para $T_{1:B}$, se obtiene:
+ 
+    + $\hat u_t^{(1)}$
+    
+    + $\hat \sigma_1^2 = T^{-1}\sum_{t=1}^T  (\hat u_t^{(1)})^2$
+ 
+ + Se obtiene el moelo OSD para $T_{B:N}$, se obtiene:
+ 
+    + $\hat u_t^{(2)}$
+    
+    + $\hat \sigma_1^2 = T^{-1}\sum_{t=1}^T  (\hat u_t^{(2)})^2$
+ 
+
+
+
+
+Con esta notación es posible realizar los tests 
+ 
+ + Sample Split:
+ 
+$$
+\lambda_{SS} = (T_1+T_2)[log (\hat \sigma_{1,2}^2)-log \Big(\frac{[T_1\hat \sigma^2_{1}+T_2\hat \sigma^2_{2}]}{T_1+T_2}\Big)]
+$$
+
+The sample-split test checks the null hypothesis that the AR coefficients and deterministic terms do not change during the sample period
+ 
+ + Break Point:
+
+$$
+\lambda_{BP} = (T_1+T_2)log(\hat\sigma_{1,2}^2)-[T_1log(\hat\sigma_1^2)+T_2log(\hat\sigma_2^2)]
+$$
+test checks in addition the constancy of the white noise variance. 
+
+Estos tests comparan la varianza residual estimada del modelo con coeficientes constantes y en los modelos en los cuales se permite la variacion de los coeficientes.
+
+Es decir, chequean si hay diferencias significativas entre los estimadores antes y despues de $T_B$
+
+*The Chow Forecast Test*
+
+$$
+\lambda_{CF}=\frac{T\hat\sigma^2_u-T_1\hat\sigma^2_{(1)}}{T_1\hat\sigma^2_{(1)}}*\frac{T_1-K}{T-T_1}
+$$
+Donde $K$ es el número de regresoras en un modelo restringido, estable. Por lo que este test compara la varianza residual del modelo completo y la compara con la del primer subperíodo. Otra forma de interpretar este test es que chequea si las predicciones hechas habiendo modelado con el primer subperiodo, son compatibles para el segundo subperiodo ~ distr $F(T-T_1,T_1-K)$
+
+
+Si una secuencia de test es realizado para distintos $T_B$ y la decisión está basada en el mayor estadistico, esto debe ser tenido en cuenta al derivar la distribución asintotica del test de prueba.
+
+Bueno, estos 3 test pueden ser realizados para distintos $T_B$, pero hay un problema si se considera que todo $T$ puede ser $T_B$, en ese caso se basa el test en:
+
+$$
+sup \lambda_{SS}; T_B \in T
+$$
+Que no es $\chi$ asintoticamente.
+
+Desafortunadamente en muestras de tamaño común, $\chi$ y $F$ no son buenas aproximaciones y la probabilidad de cometer un error tipo I (rechazar $H_0$ cuando es correcta)
+
+Por eso, hay propuestas para "bootstrap" estos test, ¿en que consiste tal metodo?
+
+  + Estimar el modelo y obtener $\hat u$
+  
+  + Computar los residuos centrados$\hat u - \bar u$
+  
+  + Muestrear con reemplazo $T$ residuos centrados
+  
+  + Computar la serie recursivamente empezando por $y_{-p+1},...,y_0$ para un modelo AR(p)
+  
+  + El modelo de interés es luego reestimado con y sin restricciones y las versiones bootstraped de los estadisticos son computados. 
+
+
+Si este proceso es repetido suficientes veces los valores criticos pueden ser obtenidos, lo cual reemplaza a los valores criticos de las distribuciones de $\chi$ y $F$
+
+
+####2.6.3 Recursive Analysis
+
+Muchos analysis recursivos a menudo se computan para mostrar la estabilidad (o no) de un modelo a través del tiempo. Es decir, se realizan varios modelos usando como datos $t=1,...,\tau$, donde $\tau$ es un valor chico de $T_1$ a $T$
+
+También suelen graficarse la serie de *recursive residuals*, esto es, la serie de los errores de las predicciones en  $t = \tau$, basado en el modelo de $t...\tau-1$
+
+Formalmente..
+
+Para un modelo lineal 
+$$
+y_t = x_t'\beta+u_t
+$$
+De $t=1,...T$, con $x_t$($K \times 1$) y $\beta_\tau$
+
+Para poder sacar los residuos recursivos son necesarios dos cosas, saber $\beta_\tau$ y luego calcular $\hat u_\tau^{(r)}$
+
+$$
+\hat \beta_\tau = \frac{\sum_{t=1}^{\tau}x_ty_t}{\Big(\sum_{t=1}^{\tau}x_tx_t'\Big)}
+$$
+Pero eso es la estimación de cualquier $\beta$ común y corriente.
+
+El *one-step* residual es:
+
+$$
+\hat u_\tau^{(r)} = y_\tau-x_\tau'\hat \beta_{(\tau-1)}
+$$
+Pero lo que se suele graficar es este residuo normalizado.
+
+¿Cual es el termino de normalización?
+
+$$
+\Theta = \Big(1+x_\tau'\big(\sum_{t=1}^{\tau-1}x_tx_t'\big)^{-1}x_\tau\Big)^{1/2}
+$$
+Por lo que los residuos rescursivos van a estar dados por:
+
+
+$$
+\hat u_\tau^{(r)} = \frac{y_\tau-x_\tau'\hat \beta_{(\tau-1)}}{\Theta}
+$$
+Si $x_t$ es un regresor fijo no estocastico, el forecast error tiene media cero y varianza conocida:
+
+$$
+\sigma_u^2 * \Theta^ 2
+$$
+
+A menudo, los residuos recursivos son ploteado junto con una banda de $\pm \hat \sigma_u^2$, donde 
+
+$$
+\hat \sigma_u^2 = (T-K)^{-1}\sum_{t=1}^T \hat u_t^2
+$$
+
+Que es el estimador de la varianza típico.
+
+
+Hay una cuestión asociada a la forma de cálculo de esto, y eso es que debe existir una inversa de $\sum_{t=1}^\tau x_tx_t'$, lo que indica que podría no estar disponible para modelo con variables dicotomicas que entran en acción en un $T_B$, ya que cuando valga 0 esa variable, aquel es una matriz singular.
+
+
+*CUSUM test* es un test que analiza la suma acumulativa de residuos recursivos
+
+El estadistico esta dado por:
+
+$$
+CUSUM_\tau = \sum_{t=K+1}^{\tau}\frac{\hat u^{(r)}_t}{\hat \sigma_u}
+$$
+
+Esto también puede dar la sensación de cambios estructurales y suelen ser graficados para $\tau=K+1,...,T$
+
+Si CUSUM se va demasiado lejos de 0, esto es evidencia de inestabilidad estructural. Está diseñado para detectar residuos distinto de 0 con el cambio de parametros aunque no podría ser muy poderoso cuando los cambios estructurales sean varios y se compensen entre sí
+
+Para anular el efecto compensación que puedan tener varios cambios estructurales puede usarse el CUSUM-of-squares (CUSUM-SQ)
+
+$$
+CUSUM-SQ_\tau = \frac{ \sum_{t=K+1}^{\tau}(\hat u_t^{(r)})^2}{\sum_{t=K+1}^{T}(\hat u_t^{(r)})^2}
+$$
+
+¿Como se usa esto paraa detectar inestabilidad estructural?, bueno si este estadistico cruza las lineas dadas por:
+
+$$
+\pm c + \frac{(\tau-K)}{T-K}
+$$
+
+$c$ es solo una constante que depende el nivel de significancia deseado, T, y el numero de regresoras. Esto esta tabulado.
+
+####2.7 Test de raíz unitaria
+
+
